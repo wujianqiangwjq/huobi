@@ -61,7 +61,6 @@ func (hb *HuoBi) SetHandleMessage() {
 			log.Println(er)
 			return
 		}
-		log.Println(jsondata)
 		if ping := jsondata.Get("ping").MustInt64(); ping > 0 {
 			hb.HandlePing(pingData{Ping: ping})
 		}
