@@ -9,6 +9,8 @@ import (
 	"github.com/bitly/go-simplejson"
 )
 
+var Endpoint = "wss://api.huobi.pro/ws"
+
 type Listener = func(topic string, data *simplejson.Json)
 
 type HuoBi struct {
@@ -18,8 +20,18 @@ type HuoBi struct {
 	subscribedResult map[string]bool
 }
 
-func Connect(endpoint string) (*HuoBi, error) {
+func GenerateConnect(endpoint string) (*HuoBi, error) {
 	sws, err := NewSafeWebSocket(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	s := &HuoBi{sws: sws, subscribedList: make(map[string]Listener), subscribedResult: make(map[string]bool)}
+	s.SetHandleMessage()
+	return s, nil
+}
+
+func DefaultConnect() (*HuoBi, error) {
+	sws, err := NewSafeWebSocket(Endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +82,6 @@ func (hb *HuoBi) SetHandleMessage() {
 
 }
 func (hb *HuoBi) HandlePing(ping pingData) {
-	log.Println("handle ping *******************")
 	data := pongData{Pong: ping.Ping}
 	hb.SendMessage(data)
 }
