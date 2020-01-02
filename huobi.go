@@ -11,7 +11,7 @@ import (
 
 var Endpoint = "wss://api.huobi.pro/ws"
 
-type Listener = func(topic string, data *simplejson.Json)
+type Listener = func(data *simplejson.Json)
 
 type HuoBi struct {
 	sws              *SafeWebSocket
@@ -70,7 +70,7 @@ func (hb *HuoBi) SetHandleMessage() {
 			listerHandler, ok := hb.subscribedList[ch]
 			hb.mutex.Unlock()
 			if ok {
-				listerHandler(ch, jsondata)
+				listerHandler(jsondata)
 			}
 		}
 		if subed := jsondata.Get("subbed").MustString(); subed != "" {
