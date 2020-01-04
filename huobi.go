@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/bitly/go-simplejson"
 )
@@ -91,14 +90,9 @@ func (hb *HuoBi) Subcribe(topic string, lisenter Listener) {
 	}
 	return
 }
-func (hb *HuoBi) Loop(flag bool) {
-
-	if flag {
-		for hb.sws.lastError == nil {
-			time.Sleep(2 * time.Second)
-		}
-		log.Println(hb.sws.lastError)
-	}
-	return
-
+func (hb *HuoBi) Loop() {
+	hb.sws.Wait()
+}
+func (hb *HuoBi) Close() {
+	hb.sws.Destroy()
 }

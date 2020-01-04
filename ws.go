@@ -2,7 +2,7 @@ package huobi
 
 import (
 	"errors"
-	"time"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,8 +16,7 @@ type SafeWebSocket struct {
 	lisenter     Lisenter
 	sendMsgQueue chan []byte
 	lastError    error
-	sendFlag     bool
-	recFlag      bool
+	wg           *sync.WaitGroup
 }
 
 func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
@@ -25,9 +24,11 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 	if er != nil {
 		return nil, er
 	}
-	s := &SafeWebSocket{ws: ws, sendMsgQueue: make(chan []byte, 1000)}
+	var wg sync.WaitGroup
+	wg.Add(2)
+	s := &SafeWebSocket{ws: ws, sendMsgQueue: make(chan []byte, 1000), wg: &wg}
 	go func() {
-		s.sendFlag = true
+
 		for s.lastError == nil {
 			senddata := <-s.sendMsgQueue
 			if wer := s.ws.WriteMessage(websocket.TextMessage, senddata); wer != nil {
@@ -36,10 +37,10 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 			}
 
 		}
-		s.sendFlag = false
+		wg.Done()
 	}()
 	go func() {
-		s.recFlag = true
+
 		for s.lastError == nil {
 			if _, data, rerr := s.ws.ReadMessage(); rerr != nil {
 				s.lastError = rerr
@@ -50,7 +51,7 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 			}
 
 		}
-		s.recFlag = false
+		wg.Done()
 	}()
 	return s, nil
 }
@@ -58,14 +59,13 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 func (sws *SafeWebSocket) Lisenter(lisenter Lisenter) {
 	sws.lisenter = lisenter
 }
+func (sws *SafeWebSocket) Wait() {
+	sws.wg.Wait()
+}
 func (sws *SafeWebSocket) Destroy() error {
 	var err error
 	err = nil
 	sws.lastError = DestroyError
-	if !sws.sendFlag && !sws.recFlag {
-		time.Sleep(100 * time.Millisecond)
-
-	}
 	if sws.ws != nil {
 		err = sws.ws.Close()
 		sws.ws = nil
