@@ -48,7 +48,9 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 				break
 
 			} else {
-				s.lisenter(data)
+				go func(sws *SafeWebSocket, readata []byte) {
+					sws.lisenter(readata)
+				}(s, data)
 			}
 
 		}
