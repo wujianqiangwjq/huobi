@@ -31,10 +31,11 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 
 		for s.lastError == nil {
 			senddata := <-s.sendMsgQueue
-			if wer := s.ws.WriteMessage(websocket.TextMessage, senddata); wer != nil {
-				s.lastError = wer
-				break
-			}
+			go func(sws *SafeWebSocket, data []byte) {
+				if wer := sws.ws.WriteMessage(websocket.TextMessage, data); wer != nil {
+					sws.lastError = wer
+				}
+			}(s, senddata)
 
 		}
 		wg.Done()
