@@ -47,6 +47,14 @@ func (hb *HuoBi) SendMessage(data interface{}) error {
 	hb.sws.SendMessage(bdata)
 	return nil
 }
+func (hb *HuoBi) SendPongMessage(data interface{}) error {
+	bdata, er := json.Marshal(data)
+	if er != nil {
+		return er
+	}
+	rer := hb.sws.SendPongMessage(bdata)
+	return rer
+}
 
 func (hb *HuoBi) SetHandleMessage() {
 	hb.sws.Lisenter(func(buf []byte) {
@@ -61,14 +69,16 @@ func (hb *HuoBi) SetHandleMessage() {
 			return
 		}
 		if ping := jsondata.Get("ping").MustInt64(); ping > 0 {
-			hb.HandlePing(pingData{Ping: ping})
+			if er := hb.HandlePing(pingData{Ping: ping}); er != nil {
+				hb.HandlePing(pingData{Ping: ping})
+			}
 		}
 		if ch := jsondata.Get("ch").MustString(); ch != "" {
 			hb.mutex.Lock()
 			listerHandler, ok := hb.subscribedList[ch]
 			hb.mutex.Unlock()
 			if ok {
-				listerHandler(jsondata)
+				go listerHandler(jsondata)
 			}
 		}
 		if subed := jsondata.Get("subbed").MustString(); subed != "" {
@@ -79,9 +89,9 @@ func (hb *HuoBi) SetHandleMessage() {
 	})
 
 }
-func (hb *HuoBi) HandlePing(ping pingData) {
+func (hb *HuoBi) HandlePing(ping pingData) error {
 	data := pongData{Pong: ping.Ping}
-	hb.SendMessage(data)
+	return hb.SendPongMessage(data)
 }
 func (hb *HuoBi) Subcribe(topic string, lisenter Listener) {
 	if _, ok := hb.subscribedList[topic]; !ok {
