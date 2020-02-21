@@ -36,6 +36,7 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 			log.Println("handle write message")
 			if wer := s.ws.WriteMessage(websocket.TextMessage, senddata); wer != nil {
 				s.writelastError = wer
+				log.Println(wer)
 				break
 			}
 
@@ -47,6 +48,7 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 		for s.readlastError == nil {
 			if _, data, rerr := s.ws.ReadMessage(); rerr != nil {
 				s.readlastError = rerr
+				log.Println(rerr)
 				break
 
 			} else {

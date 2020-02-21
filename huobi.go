@@ -49,14 +49,13 @@ func (hb *HuoBi) SendMessage(data interface{}) error {
 	return nil
 }
 func (hb *HuoBi) SendPongMessage(data interface{}) {
-	if hb.flagpong {
-		bdata, er := json.Marshal(data)
-		if er != nil {
-			return
-		}
-		hb.sws.DirectSendMessage(bdata)
-		hb.flagpong = !hb.flagpong
+
+	bdata, er := json.Marshal(data)
+	if er != nil {
+		return
 	}
+	hb.sws.DirectSendMessage(bdata)
+
 	return
 }
 
