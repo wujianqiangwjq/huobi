@@ -54,7 +54,6 @@ func (hb *HuoBi) SendPongMessage(data interface{}) {
 		if er != nil {
 			return er
 		}
-
 		hb.sws.SendMessage(bdata)
 		hb.flagpong = !hb.flagpong
 	}
@@ -74,7 +73,6 @@ func (hb *HuoBi) SetHandleMessage() {
 			return
 		}
 		if ping := jsondata.Get("ping").MustInt64(); ping > 0 {
-
 			hb.HandlePing(pingData{Ping: ping})
 
 		}
@@ -94,9 +92,9 @@ func (hb *HuoBi) SetHandleMessage() {
 	})
 
 }
-func (hb *HuoBi) HandlePing(ping pingData) error {
+func (hb *HuoBi) HandlePing(ping pingData) {
 	data := pongData{Pong: ping.Ping}
-	return hb.SendPongMessage(data)
+	hb.SendPongMessage(data)
 }
 func (hb *HuoBi) Subcribe(topic string, lisenter Listener) {
 	if _, ok := hb.subscribedList[topic]; !ok {
