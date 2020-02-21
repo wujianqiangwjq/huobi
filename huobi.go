@@ -73,6 +73,7 @@ func (hb *HuoBi) SetHandleMessage() {
 			return
 		}
 		if ping := jsondata.Get("ping").MustInt64(); ping > 0 {
+			log.Println("handle ping message")
 			hb.HandlePing(pingData{Ping: ping})
 
 		}
@@ -81,6 +82,7 @@ func (hb *HuoBi) SetHandleMessage() {
 			listerHandler, ok := hb.subscribedList[ch]
 			hb.mutex.Unlock()
 			if ok {
+				log.Println("handle read message")
 				go listerHandler(jsondata)
 			}
 		}

@@ -2,6 +2,7 @@ package huobi
 
 import (
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -32,6 +33,7 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 
 		for s.writelastError == nil {
 			senddata := <-s.sendMsgQueue
+			log.Println("handle write message")
 			if wer := s.ws.WriteMessage(websocket.TextMessage, senddata); wer != nil {
 				s.writelastError = wer
 				break
