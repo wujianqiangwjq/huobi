@@ -80,3 +80,8 @@ func (sws *SafeWebSocket) Destroy() error {
 func (sws *SafeWebSocket) SendMessage(data []byte) {
 	sws.sendMsgQueue <- data
 }
+func (sws *SafeWebSocket) DirectSendMessage(data []byte) error {
+	wer := sws.ws.WriteMessage(websocket.TextMessage, data)
+	return wer
+
+}

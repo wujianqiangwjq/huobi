@@ -54,7 +54,7 @@ func (hb *HuoBi) SendPongMessage(data interface{}) {
 		if er != nil {
 			return
 		}
-		hb.sws.SendMessage(bdata)
+		hb.sws.DirectSendMessage(bdata)
 		hb.flagpong = !hb.flagpong
 	}
 	return
