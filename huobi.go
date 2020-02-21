@@ -52,7 +52,7 @@ func (hb *HuoBi) SendPongMessage(data interface{}) {
 	if hb.flagpong {
 		bdata, er := json.Marshal(data)
 		if er != nil {
-			return er
+			return
 		}
 		hb.sws.SendMessage(bdata)
 		hb.flagpong = !hb.flagpong
