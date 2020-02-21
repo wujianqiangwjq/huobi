@@ -12,11 +12,12 @@ type Lisenter = func([]byte)
 var DestroyError = errors.New("Destroy websocket")
 
 type SafeWebSocket struct {
-	ws           *websocket.Conn
-	lisenter     Lisenter
-	sendMsgQueue chan []byte
-	lastError    error
-	wg           *sync.WaitGroup
+	ws             *websocket.Conn
+	lisenter       Lisenter
+	sendMsgQueue   chan []byte
+	readlastError  error
+	writelastError error
+	wg             *sync.WaitGroup
 }
 
 func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
@@ -29,10 +30,10 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 	s := &SafeWebSocket{ws: ws, sendMsgQueue: make(chan []byte, 1000), wg: &wg}
 	go func() {
 
-		for s.lastError == nil {
+		for s.writelastError == nil {
 			senddata := <-s.sendMsgQueue
 			if wer := s.ws.WriteMessage(websocket.TextMessage, senddata); wer != nil {
-				s.lastError = wer
+				s.writelastError = wer
 				break
 			}
 
@@ -41,9 +42,9 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 	}()
 	go func() {
 
-		for s.lastError == nil {
+		for s.readlastError == nil {
 			if _, data, rerr := s.ws.ReadMessage(); rerr != nil {
-				s.lastError = rerr
+				s.readlastError = rerr
 				break
 
 			} else {
@@ -65,7 +66,8 @@ func (sws *SafeWebSocket) Wait() {
 func (sws *SafeWebSocket) Destroy() error {
 	var err error
 	err = nil
-	sws.lastError = DestroyError
+	sws.readlastError = DestroyError
+	sws.writelastError = DestroyError
 	if sws.ws != nil {
 		err = sws.ws.Close()
 		sws.ws = nil
