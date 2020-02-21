@@ -18,7 +18,6 @@ type SafeWebSocket struct {
 	readlastError  error
 	writelastError error
 	wg             *sync.WaitGroup
-	flagpong       bool
 }
 
 func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
@@ -28,7 +27,7 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 	}
 	var wg sync.WaitGroup
 	wg.Add(2)
-	s := &SafeWebSocket{ws: ws, sendMsgQueue: make(chan []byte, 1000), wg: &wg, flagpong: true}
+	s := &SafeWebSocket{ws: ws, sendMsgQueue: make(chan []byte, 1000), wg: &wg}
 	go func() {
 
 		for s.writelastError == nil {
@@ -49,7 +48,7 @@ func NewSafeWebSocket(endpoint string) (*SafeWebSocket, error) {
 				break
 
 			} else {
-				go sws.lisenter(readata)
+				go s.lisenter(data)
 			}
 
 		}
@@ -67,8 +66,8 @@ func (sws *SafeWebSocket) Wait() {
 func (sws *SafeWebSocket) Destroy() error {
 	var err error
 	err = nil
-	sws.readlastError = DestroyError
 	sws.writelastError = DestroyError
+	sws.readlastError = DestroyError
 	if sws.ws != nil {
 		err = sws.ws.Close()
 		sws.ws = nil
@@ -80,9 +79,4 @@ func (sws *SafeWebSocket) Destroy() error {
 
 func (sws *SafeWebSocket) SendMessage(data []byte) {
 	sws.sendMsgQueue <- data
-}
-func (sws *SafeWebSocket) SendPongMessage(data []byte) error {
-	wer := sws.ws.WriteMessage(websocket.TextMessage, data)
-	return wer
-
 }
