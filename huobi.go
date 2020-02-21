@@ -17,6 +17,7 @@ type HuoBi struct {
 	subscribedList   map[string]Listener
 	mutex            sync.Mutex
 	subscribedResult map[string]bool
+	flagpong         bool
 }
 
 func GenerateConnect(endpoint string) (*HuoBi, error) {
@@ -24,7 +25,7 @@ func GenerateConnect(endpoint string) (*HuoBi, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &HuoBi{sws: sws, subscribedList: make(map[string]Listener), subscribedResult: make(map[string]bool)}
+	s := &HuoBi{sws: sws, subscribedList: make(map[string]Listener), subscribedResult: make(map[string]bool), flagpong: false}
 	s.SetHandleMessage()
 	return s, nil
 }
@@ -34,7 +35,7 @@ func DefaultConnect() (*HuoBi, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &HuoBi{sws: sws, subscribedList: make(map[string]Listener), subscribedResult: make(map[string]bool)}
+	s := &HuoBi{sws: sws, subscribedList: make(map[string]Listener), subscribedResult: make(map[string]bool), flagpong: false}
 	s.SetHandleMessage()
 	return s, nil
 }
@@ -47,13 +48,17 @@ func (hb *HuoBi) SendMessage(data interface{}) error {
 	hb.sws.SendMessage(bdata)
 	return nil
 }
-func (hb *HuoBi) SendPongMessage(data interface{}) error {
-	bdata, er := json.Marshal(data)
-	if er != nil {
-		return er
+func (hb *HuoBi) SendPongMessage(data interface{}) {
+	if hb.flagpong {
+		bdata, er := json.Marshal(data)
+		if er != nil {
+			return er
+		}
+
+		hb.sws.SendMessage(bdata)
+		hb.flagpong = !hb.flagpong
 	}
-	rer := hb.sws.SendPongMessage(bdata)
-	return rer
+	return
 }
 
 func (hb *HuoBi) SetHandleMessage() {
@@ -69,9 +74,9 @@ func (hb *HuoBi) SetHandleMessage() {
 			return
 		}
 		if ping := jsondata.Get("ping").MustInt64(); ping > 0 {
-			if er := hb.HandlePing(pingData{Ping: ping}); er != nil {
-				hb.HandlePing(pingData{Ping: ping})
-			}
+
+			hb.HandlePing(pingData{Ping: ping})
+
 		}
 		if ch := jsondata.Get("ch").MustString(); ch != "" {
 			hb.mutex.Lock()
