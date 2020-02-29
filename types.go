@@ -14,8 +14,9 @@ type reqData struct {
 	Id  string `json:"id"`
 }
 type subData struct {
-	Sub string `json:"sub"`
-	Id  string `json:"id"`
+	Sub  string `json:"sub"`
+	Id   string `json:"id"`
+	Freq string `json: "freq-ms"`
 }
 type unSubData struct {
 	UnSub string `json:"unsub"`
